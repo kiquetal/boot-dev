@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"html/template"
@@ -80,8 +81,63 @@ func (cfg *apiConfig) templateAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	d := Data{FileserverHits: strconv.Itoa(cfg.fileserverHits)}
-	tmpl.Execute(w, d)
+	err = tmpl.Execute(w, d)
+	if err != nil {
+		return
+	}
 
+}
+
+func (cfg *apiConfig) validateChirp(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Printf("Request: %v\n", r)
+	type bodyJSON struct {
+		Body string `json:"body"`
+	}
+
+	type successJSON struct {
+		Valid bool `json:"valid"`
+	}
+	fmt.Printf("Request: %v\n", r)
+	decoder := json.NewDecoder(r.Body)
+	var body bodyJSON
+	err2 := decoder.Decode(&body)
+	if body.Body == "" {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+
+	}
+	if err2 != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	if len(body.Body) > 140 {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
+		return
+
+	}
+
+	respondWithJSON(w, http.StatusOK, successJSON{Valid: true})
+
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w.WriteHeader(code)
+	encoder := json.NewEncoder(w)
+	err2 := encoder.Encode(payload)
+	if err2 != nil {
+		return
+	}
+}
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	w.WriteHeader(code)
+	encoder := json.NewEncoder(w)
+	err2 := encoder.Encode(struct {
+		Error string `json:"err"`
+	}{Error: msg})
+	if err2 != nil {
+		return
+	}
 }
 
 var api = &apiConfig{}
@@ -89,19 +145,21 @@ var api = &apiConfig{}
 func main() {
 
 	r := chi.NewRouter()
-	fsHandler := api.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("."))))
+	fsHandler := api.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
 
 	rapi := chi.NewRouter()
 	radmin := chi.NewRouter()
 	// Wrap the mux with the CORS middleware
 	r.Handle("/app", fsHandler)
 	r.Handle("/app/*", fsHandler)
-	r.Mount("/api", rapi)
 	radmin.Get("/metrics", api.templateAdmin)
 	r.Mount("/admin", radmin)
 	rapi.Get("/healthz", myHandler)
 	rapi.Get("/metrics", api.newHandler)
 	rapi.Get("/reset", api.reset)
+	rapi.Post("/validate_chirp", api.validateChirp)
+	r.Mount("/api", rapi)
+
 	corsR := addCORSHeaders(r)
 
 	// Create a new server
