@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // Middleware function to add CORS headers
@@ -116,12 +117,27 @@ func (cfg *apiConfig) validateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-
-	respondWithJSON(w, http.StatusOK, successJSON{Valid: true})
+	alteredBody := processAndReplaceBadWords(body.Body)
+	if alteredBody != body.Body && len(alteredBody) > 0 {
+		fmt.Printf("Altered body: %s\n", alteredBody)
+		respondWithJSON(w, http.StatusOK, struct {
+			CleanBody string `json:"cleaned_body"`
+		}{
+			CleanBody: strings.TrimSpace(alteredBody),
+		})
+	} else {
+		respondWithJSON(w, http.StatusOK, struct {
+			CleanBody string `json:"cleaned_body"`
+		}{
+			CleanBody: strings.TrimSpace(body.Body),
+		})
+	}
 
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+
 	w.WriteHeader(code)
 	encoder := json.NewEncoder(w)
 	err2 := encoder.Encode(payload)
@@ -129,8 +145,36 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 		return
 	}
 }
+
+func processAndReplaceBadWords(body string) string {
+
+	var badWords = []string{"kerfuffle", "sharbert", "fornax"}
+	var newBody string
+	var containBadWord bool
+
+	for _, word := range strings.Split(body, " ") {
+		for _, badWord := range badWords {
+			if strings.ToLower(word) == badWord {
+				containBadWord = true
+				break
+			}
+
+		}
+		if containBadWord {
+			newBody += "**** "
+			containBadWord = false
+		} else {
+			newBody += word + " "
+		}
+	}
+
+	return newBody
+}
+
 func respondWithError(w http.ResponseWriter, code int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
+
 	encoder := json.NewEncoder(w)
 	err2 := encoder.Encode(struct {
 		Error string `json:"err"`
