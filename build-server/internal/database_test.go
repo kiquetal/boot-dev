@@ -1,6 +1,9 @@
 package database
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestDB_NewDB(t *testing.T) {
 
@@ -26,6 +29,23 @@ func TestDB_CreateChirp(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating new chirp: %v", err)
 	}
-	databaseCon.CreateChirp("A second chirp")
-	// read the file
+
+}
+
+func TestDB_getAllChirps(t *testing.T) {
+	// Test the getAllChirps function
+	// Create a new database
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+
+	data, err := databaseCon.GetChirps()
+	fmt.Printf("Data: %v\n", data)
+	if err != nil {
+		t.Errorf("Error getting chirps: %v", err)
+	}
+	if len(data) < 1 {
+		t.Errorf("Chirps not found")
+	}
 }

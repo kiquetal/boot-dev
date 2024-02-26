@@ -127,3 +127,21 @@ func (db *DB) ensureDB() error {
 	fmt.Printf("Database found at: %s\n", db.path)
 	return nil
 }
+
+func (db *DB) GetChirps() ([]Chirp, error) {
+	db.mu.RLock()
+	var chirps []Chirp
+	defer db.mu.RUnlock()
+	databaseContent, err := db.loadDB()
+	if err != nil {
+		return nil, err
+	}
+	if len(databaseContent.Chirps) == 0 {
+		return nil, nil
+	}
+	for _, chirp := range databaseContent.Chirps {
+		chirps = append(chirps, chirp)
+	}
+
+	return chirps, nil
+}

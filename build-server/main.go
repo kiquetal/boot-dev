@@ -8,6 +8,7 @@ import (
 	"github.com/kiquetal/boot-dev/build/server/internal"
 	"html/template"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -28,7 +29,10 @@ func myHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	//write OK
-	w.Write([]byte("OK"))
+	_, err := w.Write([]byte("OK"))
+	if err != nil {
+		return
+	}
 }
 
 type apiConfig struct {
@@ -58,7 +62,10 @@ func (cfg *apiConfig) reset(w http.ResponseWriter, r *http.Request) {
 	cfg.fileserverHits = 0
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits reset"))
+	_, err := w.Write([]byte("Hits reset"))
+	if err != nil {
+		return
+	}
 }
 
 type Data struct {
@@ -204,6 +211,20 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	}
 }
 
+func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.DB.GetChirps()
+	//sort by id
+	sort.Slice(chirps, func(i, j int) bool {
+		return chirps[i].Id < chirps[j].Id
+
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusOK, chirps)
+}
+
 func processAndReplaceBadWords(body string) string {
 
 	var badWords = []string{"kerfuffle", "sharbert", "fornax"}
@@ -267,6 +288,7 @@ func main() {
 	rapi.Get("/reset", api.reset)
 	//	rapi.Post("/validate_chirp", api.validateChirp)
 	rapi.Post("/chirps", api.createChirp)
+	rapi.Get("/chirps", api.getAllChirps)
 	r.Mount("/api", rapi)
 
 	corsR := addCORSHeaders(r)
