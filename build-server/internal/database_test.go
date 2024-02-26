@@ -49,3 +49,37 @@ func TestDB_getAllChirps(t *testing.T) {
 		t.Errorf("Chirps not found")
 	}
 }
+
+func TestDB_GeneratePassword(t *testing.T) {
+	// Test the GeneratePassword function
+	// Create a new database
+
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+
+	user, error := databaseCon.CreateUser("kiquetal@gmail.com", "password")
+	if error != nil {
+		t.Errorf("Error creating new user: %v", error)
+	}
+	fmt.Printf("User: %v\n", user)
+
+}
+
+func TestDB_Login(t *testing.T) {
+	// Test the Login function
+	// Create a new database
+
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+
+	user, error := databaseCon.Login("kiquetal@gmail.com", "password")
+	if error != nil {
+		t.Errorf("Error login for user: %v", error)
+		return
+	}
+	fmt.Printf("User: %v\n", user)
+}

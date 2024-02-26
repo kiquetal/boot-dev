@@ -225,6 +225,55 @@ func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, chirps)
 }
 
+func (cfg *apiConfig) getChirpByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	fmt.Printf("ID: %v\n", id)
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID")
+		return
+	}
+	chirp, err := cfg.DB.GetChirp(idInt)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusOK, chirp)
+
+}
+
+func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
+	type userJSON struct {
+		Email string `json:"email"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	var user userJSON
+	err2 := decoder.Decode(&user)
+	if user.Email == "" {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+
+	}
+	if err2 != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+
+	}
+	userCreated, err := cfg.DB.CreateUser(user.Email)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+
+	}
+	respondWithJSON(w, http.StatusCreated, struct {
+		Email string `json:"email"`
+		Id    int    `json:"id"`
+	}{
+		Email: userCreated.Email,
+		Id:    userCreated.Id,
+	})
+}
+
 func processAndReplaceBadWords(body string) string {
 
 	var badWords = []string{"kerfuffle", "sharbert", "fornax"}
@@ -289,6 +338,8 @@ func main() {
 	//	rapi.Post("/validate_chirp", api.validateChirp)
 	rapi.Post("/chirps", api.createChirp)
 	rapi.Get("/chirps", api.getAllChirps)
+	rapi.Get("/chirps/{id}", api.getChirpByID)
+	rapi.Post("/users", api.createUser)
 	r.Mount("/api", rapi)
 
 	corsR := addCORSHeaders(r)
