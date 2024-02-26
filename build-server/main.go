@@ -5,12 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
 	"github.com/kiquetal/boot-dev/build/server/internal"
 	"html/template"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Middleware function to add CORS headers
@@ -38,6 +42,7 @@ func myHandler(w http.ResponseWriter, r *http.Request) {
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	Secret         string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -244,7 +249,8 @@ func (cfg *apiConfig) getChirpByID(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	type userJSON struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	var user userJSON
@@ -259,7 +265,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	userCreated, err := cfg.DB.CreateUser(user.Email)
+	userCreated, err := cfg.DB.CreateUser(user.Email, user.Password)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -271,6 +277,66 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	}{
 		Email: userCreated.Email,
 		Id:    userCreated.Id,
+	})
+}
+func (cfg *apiConfig) generateJWT(subjectID string, secondsToExpire int) (string, error) {
+	fmt.Printf("Secret: %s\n", cfg.Secret)
+	fmt.Printf("Subject: %s\n", subjectID)
+	fmt.Printf("Seconds to expire: %d\n", secondsToExpire)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"Issuer":    "chirpy",
+		"Subject":   subjectID,
+		"IssuedAt":  jwt.TimeFunc().Unix(),
+		"ExpiresAt": jwt.TimeFunc().Add(time.Duration(secondsToExpire) * time.Second).Unix(),
+	})
+	tokenString, err := token.SignedString([]byte(cfg.Secret))
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
+	type userJSON struct {
+		Email            string `json:"email"`
+		Password         string `json:"password"`
+		ExpiresInSeconds int    `json:"expires_in_seconds"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	var user userJSON
+	err2 := decoder.Decode(&user)
+	var defaultSecondsToExpire = 30
+	if user.Email == "" {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+
+	}
+	if user.ExpiresInSeconds == 0 {
+		user.ExpiresInSeconds = defaultSecondsToExpire
+	}
+	if err2 != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	userLogged, err := cfg.DB.Login(user.Email, user.Password)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	jwt, err := cfg.generateJWT(strconv.Itoa(userLogged.Id), user.ExpiresInSeconds)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, struct {
+		Email string `json:"email"`
+		Id    int    `json:"id"`
+		Token string `json:"token"`
+	}{
+		Email: userLogged.Email,
+		Id:    userLogged.Id,
+		Token: jwt,
 	})
 }
 
@@ -317,10 +383,12 @@ var api = &apiConfig{}
 func main() {
 
 	db, err := database.NewDB("database.json")
+	godotenv.Load()
 	if err != nil {
 		panic(err)
 	}
 	api.DB = db
+	api.Secret = os.Getenv("JWT_SECRET")
 
 	r := chi.NewRouter()
 	fsHandler := api.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
@@ -340,6 +408,7 @@ func main() {
 	rapi.Get("/chirps", api.getAllChirps)
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.Post("/users", api.createUser)
+	rapi.Post("/login", api.login)
 	r.Mount("/api", rapi)
 
 	corsR := addCORSHeaders(r)
