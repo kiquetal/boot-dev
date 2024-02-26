@@ -4,21 +4,28 @@ import "testing"
 
 func TestDB_NewDB(t *testing.T) {
 
-	// Test the NewDB function
-	// Create a new database
-	db := &DB{}
-	databaseCon, err := db.NewDB("test.json")
+	databaseCon, err := NewDB("test.json")
 	if err != nil {
 		t.Errorf("Error creating new database: %v", err)
 	}
 	if databaseCon.path != "test.json" {
 		t.Errorf("Path is not correct")
 	}
+
+}
+
+func TestDB_CreateChirp(t *testing.T) {
+	// Test the CreateChirp function
+	// Create a new database
+	databaseCon, err := NewDB("test.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
 	// create a chrip
 	_, err = databaseCon.CreateChirp("Hello World")
 	if err != nil {
 		t.Errorf("Error creating new chirp: %v", err)
 	}
+	databaseCon.CreateChirp("A second chirp")
 	// read the file
-
 }

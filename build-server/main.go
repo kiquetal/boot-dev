@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/kiquetal/boot-dev/build/server/internal"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -31,6 +33,7 @@ func myHandler(w http.ResponseWriter, r *http.Request) {
 
 type apiConfig struct {
 	fileserverHits int
+	DB             *database.DB
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -89,6 +92,38 @@ func (cfg *apiConfig) templateAdmin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (cfg *apiConfig) validateChirpFunc(r *http.Request) (bool, string, error) {
+	fmt.Printf("Validate chirp: %v\n", r)
+	type bodyJSON struct {
+		Body string `json:"body"`
+	}
+	fmt.Printf("ValidateChripRequest: %v\n", r)
+	decoder := json.NewDecoder(r.Body)
+	var body bodyJSON
+	err2 := decoder.Decode(&body)
+	if body.Body == "" {
+		return false, "", fmt.Errorf("Invalid request payload")
+	}
+	if err2 != nil {
+		return false, "", fmt.Errorf("Invalid request payload")
+	}
+	if len(body.Body) > 140 {
+		return false, "", fmt.Errorf("Chirp is too long")
+
+	}
+	alteredBody := processAndReplaceBadWords(body.Body)
+	if alteredBody != body.Body && len(alteredBody) > 0 {
+		fmt.Printf("Altered body: %s\n", alteredBody)
+
+		return true, strings.TrimSpace(alteredBody), nil
+	} else {
+
+		return true, strings.TrimSpace(body.Body), nil
+
+	}
+
+}
+
 func (cfg *apiConfig) validateChirp(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Request: %v\n", r)
@@ -133,6 +168,29 @@ func (cfg *apiConfig) validateChirp(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+}
+
+func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Printf("Create chirp: %v\n", r)
+	_, body, err := cfg.validateChirpFunc(r)
+	fmt.Printf("RequestCreateChirps: %v\n", r)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, errors.New("Invalid request payload").Error())
+		return
+	}
+	chirp, err := cfg.DB.CreateChirp(body)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, struct {
+		Body string `json:"body"`
+		Id   int    `json:"id"`
+	}{
+		Body: chirp.Body,
+		Id:   chirp.Id,
+	})
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -188,6 +246,12 @@ var api = &apiConfig{}
 
 func main() {
 
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		panic(err)
+	}
+	api.DB = db
+
 	r := chi.NewRouter()
 	fsHandler := api.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
 
@@ -201,7 +265,8 @@ func main() {
 	rapi.Get("/healthz", myHandler)
 	rapi.Get("/metrics", api.newHandler)
 	rapi.Get("/reset", api.reset)
-	rapi.Post("/validate_chirp", api.validateChirp)
+	//	rapi.Post("/validate_chirp", api.validateChirp)
+	rapi.Post("/chirps", api.createChirp)
 	r.Mount("/api", rapi)
 
 	corsR := addCORSHeaders(r)
@@ -215,7 +280,7 @@ func main() {
 	// Start the server
 
 	println("Server is listening on", server.Addr)
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
