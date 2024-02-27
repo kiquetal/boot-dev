@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -282,6 +283,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Update route: %v\n", r)
+
 	//read from context
 	user := r.Context().Value("userId").(string)
 	fmt.Printf("User: %s\n", user)
@@ -415,7 +417,9 @@ func (cfg *apiConfig) middlewareAuth(next http.Handler) http.Handler {
 
 		}
 
-		fmt.Printf("Token: %v\n", token.Claims.(*jwt.RegisteredClaims).Subject)
+		subId := token.Claims.(*jwt.RegisteredClaims).Subject
+		ctx := context.WithValue(r.Context(), "userId", subId)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
