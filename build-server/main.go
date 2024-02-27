@@ -1,12 +1,11 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	"github.com/kiquetal/boot-dev/build/server/internal"
 	"html/template"
@@ -282,6 +281,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 }
 func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
+	fmt.Printf("Update route: %v\n", r)
 	//read from context
 	user := r.Context().Value("userId").(string)
 	fmt.Printf("User: %s\n", user)
@@ -291,11 +291,11 @@ func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) generateJWT(subjectID string, secondsToExpire int) (string, error) {
 	fmt.Printf("Subject: %s\n", subjectID)
 	fmt.Printf("Seconds to expire: %d\n", secondsToExpire)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"Issuer":    "chirpy",
-		"Subject":   subjectID,
-		"IssuedAt":  jwt.TimeFunc().Unix(),
-		"ExpiresAt": jwt.TimeFunc().Add(time.Duration(secondsToExpire) * time.Second).Unix(),
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
+		Issuer:    "chirpy",
+		Subject:   subjectID,
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(secondsToExpire))),
 	})
 	tokenString, err := token.SignedString([]byte(cfg.Secret))
 	if err != nil {
@@ -389,28 +389,33 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 func (cfg *apiConfig) middlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Get the token from the header
+		fmt.Printf("Middleware auth: %v\n", r)
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
 			respondWithError(w, http.StatusUnauthorized, "No token found")
 			return
 		}
 		tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
-		token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+		fmt.Printf("Token: %s\n", tokenString)
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(api.Secret), nil
 
 		})
+
 		if err != nil {
+			fmt.Printf("Error:11111 %v\n", err)
 			respondWithError(w, http.StatusUnauthorized, "Invalid token")
 			return
 
 		}
 		if !token.Valid {
+			fmt.Printf("Token invalid!!!!: %v\n", token)
 			respondWithError(w, http.StatusUnauthorized, "Invalid token")
 			return
 
 		}
-		ctx := context.WithValue(r.Context(), "userId", token.Claims.(*jwt.StandardClaims).Subject)
-		next.ServeHTTP(w, r.WithContext(ctx))
+
+		fmt.Printf("Token: %v\n", token.Claims.(*jwt.RegisteredClaims).Subject)
 	})
 }
 
@@ -444,7 +449,7 @@ func main() {
 	rapi.Get("/chirps", api.getAllChirps)
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.Post("/users", api.createUser)
-	rapi.With(api.middlewareAuth).Post("/users", api.updateRoute)
+	rapi.With(api.middlewareAuth).Put("/users", api.updateRoute)
 	rapi.Post("/login", api.login)
 	r.Mount("/api", rapi)
 
