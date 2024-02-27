@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -279,8 +280,15 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		Id:    userCreated.Id,
 	})
 }
+func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
+
+	//read from context
+	user := r.Context().Value("userId").(string)
+	fmt.Printf("User: %s\n", user)
+
+}
+
 func (cfg *apiConfig) generateJWT(subjectID string, secondsToExpire int) (string, error) {
-	fmt.Printf("Secret: %s\n", cfg.Secret)
 	fmt.Printf("Subject: %s\n", subjectID)
 	fmt.Printf("Seconds to expire: %d\n", secondsToExpire)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -378,6 +386,34 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	}
 }
 
+func (cfg *apiConfig) middlewareAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get the token from the header
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			respondWithError(w, http.StatusUnauthorized, "No token found")
+			return
+		}
+		tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(api.Secret), nil
+
+		})
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Invalid token")
+			return
+
+		}
+		if !token.Valid {
+			respondWithError(w, http.StatusUnauthorized, "Invalid token")
+			return
+
+		}
+		ctx := context.WithValue(r.Context(), "userId", token.Claims.(*jwt.StandardClaims).Subject)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 var api = &apiConfig{}
 
 func main() {
@@ -408,6 +444,7 @@ func main() {
 	rapi.Get("/chirps", api.getAllChirps)
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.Post("/users", api.createUser)
+	rapi.With(api.middlewareAuth).Post("/users", api.updateRoute)
 	rapi.Post("/login", api.login)
 	r.Mount("/api", rapi)
 
