@@ -83,3 +83,34 @@ func TestDB_Login(t *testing.T) {
 	}
 	fmt.Printf("User: %v\n", user)
 }
+
+func TestDB_GetUser(t *testing.T) {
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+	user, e := databaseCon.GetUser(1)
+	if e != nil {
+		t.Errorf("Error getting user: %v", e)
+		return
+	}
+	fmt.Printf("User: %v\n", user)
+
+}
+func TestDB_PutUser(t *testing.T) {
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+	user, e := databaseCon.UpdateUser(User{
+		Id:       1,
+		Email:    "kiquetal@gmail.com",
+		Password: "nueeva",
+	})
+	if e != nil {
+		t.Errorf("Error updating user: %v", e)
+		return
+	}
+	fmt.Printf("User: %v\n", user)
+
+}

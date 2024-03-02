@@ -1,9 +1,1 @@
-{
-  "users": {
-    "1": {
-      "email": "kiquetal@gmail.com",
-      "id": 1,
-      "password": "$2a$10$WnLiFtYWw6Ck4soVguA1L.guLwLIUu1HRBtI9wkvNHg0CHPMvr4.W"
-    }
-  }
-}
+{"users":{"1":{"email":"kiquetal@gmail.com","id":0,"password":"$2a$10$zoDOjeLI83CSPjQ0ousE1e/zotSEgCkduZrpw/x1.myT1z/mllmaO"}}}

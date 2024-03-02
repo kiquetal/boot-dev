@@ -292,3 +292,51 @@ func (db *DB) checkPassword(password string, hashedPassword []byte) (bool, error
 	}
 	return true, nil
 }
+
+func (db *DB) GetUser(id int) (User, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	userDatabaseContent, err := db.loadUsersDB()
+	if err != nil {
+		return User{}, err
+	}
+	if len(userDatabaseContent.Users) == 0 {
+		return User{}, errors.New("user not found")
+	}
+	user, ok := userDatabaseContent.Users[id]
+	if !ok {
+		return User{}, errors.New("user not found")
+	}
+	return user, nil
+}
+
+func (db *DB) UpdateUser(user User) (User, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	userDatabaseContent, err := db.loadUsersDB()
+	if err != nil {
+		return User{}, err
+	}
+	if len(userDatabaseContent.Users) == 0 {
+		return User{}, errors.New("user not found")
+	}
+	_, ok := userDatabaseContent.Users[user.Id]
+	if !ok {
+		return User{}, errors.New("user not found")
+	}
+	var newPassword, e = db.generateHashFromPassword(user.Password)
+	if e != nil {
+		return User{}, e
+	}
+
+	userDatabaseContent.Users[user.Id] = User{
+		Email:    user.Email,
+		Password: string(newPassword),
+		Id:       user.Id,
+	}
+	err = db.writeDB(userDatabaseContent)
+	if err != nil {
+		return User{}, err
+	}
+	return user, nil
+}

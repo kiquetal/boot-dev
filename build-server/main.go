@@ -284,9 +284,51 @@ func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Update route: %v\n", r)
 
+	type userJSON struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	var userInput userJSON
+	err2 := decoder.Decode(&userInput)
+	if err2 != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
 	//read from context
-	user := r.Context().Value("userId").(string)
-	fmt.Printf("User: %s\n", user)
+	userId := r.Context().Value("userId").(string)
+	id, e := strconv.Atoi(userId)
+	if e != nil {
+		respondWithError(w, http.StatusInternalServerError, e.Error())
+		return
+
+	}
+	user, e := cfg.DB.GetUser(id)
+	fmt.Printf("Obtainig user by header id", user)
+	if e != nil {
+		respondWithError(w, http.StatusInternalServerError, e.Error())
+		return
+
+	}
+
+	user, e = cfg.DB.UpdateUser(database.User{
+		Id:       user.Id,
+		Email:    userInput.Email,
+		Password: userInput.Password,
+	})
+	if e != nil {
+		respondWithError(w, http.StatusInternalServerError, e.Error())
+		return
+
+	}
+	respondWithJSON(w, http.StatusOK, struct {
+		Email string `json:"email"`
+		Id    int    `json:"id"`
+	}{
+		Email: user.Email,
+		Id:    user.Id,
+	})
 
 }
 
@@ -314,7 +356,7 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var user userJSON
 	err2 := decoder.Decode(&user)
-	var defaultSecondsToExpire = 30
+	var defaultSecondsToExpire = 24 * 60 * 60
 	if user.Email == "" {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
@@ -323,6 +365,10 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	if user.ExpiresInSeconds == 0 {
 		user.ExpiresInSeconds = defaultSecondsToExpire
 	}
+	if user.ExpiresInSeconds > defaultSecondsToExpire {
+		user.ExpiresInSeconds = defaultSecondsToExpire
+	}
+
 	if err2 != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
