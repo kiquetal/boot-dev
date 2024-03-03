@@ -33,6 +33,10 @@ type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
 }
 
+type RevokedToken struct {
+	Tokens map[string]bool `json:"tokens"`
+}
+
 func NewDB(path string) (*DB, error) {
 
 	// We return the path to the database file.
