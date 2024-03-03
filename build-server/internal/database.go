@@ -140,6 +140,8 @@ func (db *DB) loadUsersDB() (UserDB, error) {
 
 func (db *DB) writeDB(data interface{}) error {
 	//open file
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	newData, _ := json.Marshal(data)
 	err := os.WriteFile(db.path, newData, 0644)
 	if err != nil {
@@ -203,8 +205,7 @@ func (db *DB) GetChirp(id int) (Chirp, error) {
 }
 
 func (db *DB) CreateUser(email, password string) (User, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+
 	//open file
 	userDatabaseContent, err := db.loadUsersDB()
 	if err != nil {
@@ -315,8 +316,7 @@ func (db *DB) GetUser(id int) (User, error) {
 }
 
 func (db *DB) UpdateUser(user User) (User, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+
 	userDatabaseContent, err := db.loadUsersDB()
 	if err != nil {
 		return User{}, err
@@ -346,9 +346,7 @@ func (db *DB) UpdateUser(user User) (User, error) {
 }
 
 func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
-	db.mu.Lock()
 	db.ensureDB()
-	defer db.mu.Unlock()
 	//open file
 	allData, error := db.GetAllRevokedTokens()
 	if error != nil {
@@ -388,7 +386,8 @@ func (db *DB) IsRevokedToken(refresh string) (bool, error) {
 func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
 	//open file
 	db.ensureDB()
-
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	data, err := os.ReadFile(db.path)
 	if err != nil {
 		return RevokedTokenDB{}, err
@@ -402,6 +401,5 @@ func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
 		fmt.Printf("Error unmarshalling data: %v", err)
 		return RevokedTokenDB{}, err
 	}
-
 	return revokedTokens, nil
 }

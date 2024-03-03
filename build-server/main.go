@@ -298,6 +298,12 @@ func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
 	//read from context
 	userId := r.Context().Value("userId").(string)
+	issuer := r.Context().Value("issuer").(string)
+	if issuer != "chirpy-access" {
+		respondWithError(w, http.StatusUnauthorized, "Invalid issuer")
+		return
+
+	}
 	id, e := strconv.Atoi(userId)
 	if e != nil {
 		respondWithError(w, http.StatusInternalServerError, e.Error())
@@ -332,14 +338,23 @@ func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (cfg *apiConfig) generateJWT(subjectID string, secondsToExpire int) (string, error) {
+func (cfg *apiConfig) generateJWT(subjectID string, issuer string) (string, error) {
 	fmt.Printf("Subject: %s\n", subjectID)
-	fmt.Printf("Seconds to expire: %d\n", secondsToExpire)
+	fmt.Printf("Issuer: %s\n", issuer)
+	const ttlForToken = 24 * 60 * 60
+	const ttlForRefreshToken = 24 * 60 * 60 * 60
+	var ttl int
+	if issuer == "chirpy-access" {
+		ttl = ttlForToken
+	} else {
+		ttl = ttlForRefreshToken
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
-		Issuer:    "chirpy",
+		Issuer:    issuer,
 		Subject:   subjectID,
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(secondsToExpire))),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(ttl))),
 	})
 	tokenString, err := token.SignedString([]byte(cfg.Secret))
 	if err != nil {
@@ -349,24 +364,17 @@ func (cfg *apiConfig) generateJWT(subjectID string, secondsToExpire int) (string
 }
 func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	type userJSON struct {
-		Email            string `json:"email"`
-		Password         string `json:"password"`
-		ExpiresInSeconds int    `json:"expires_in_seconds"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		//	ExpiresInSeconds int    `json:"expires_in_seconds"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	var user userJSON
 	err2 := decoder.Decode(&user)
-	var defaultSecondsToExpire = 24 * 60 * 60
 	if user.Email == "" {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 
-	}
-	if user.ExpiresInSeconds == 0 {
-		user.ExpiresInSeconds = defaultSecondsToExpire
-	}
-	if user.ExpiresInSeconds > defaultSecondsToExpire {
-		user.ExpiresInSeconds = defaultSecondsToExpire
 	}
 
 	if err2 != nil {
@@ -378,21 +386,29 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-	jwt, err := cfg.generateJWT(strconv.Itoa(userLogged.Id), user.ExpiresInSeconds)
+	jwt, err := cfg.generateJWT(strconv.Itoa(userLogged.Id), "chirpy-access")
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	refresh, err := cfg.generateJWT(strconv.Itoa(userLogged.Id), "chirpy-refresh")
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+
+	}
 
 	respondWithJSON(w, http.StatusOK, struct {
-		Email string `json:"email"`
-		Id    int    `json:"id"`
-		Token string `json:"token"`
+		Email        string `json:"email"`
+		Id           int    `json:"id"`
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
 	}{
-		Email: userLogged.Email,
-		Id:    userLogged.Id,
-		Token: jwt,
+		Email:        userLogged.Email,
+		Id:           userLogged.Id,
+		Token:        jwt,
+		RefreshToken: refresh,
 	})
 }
 
@@ -464,7 +480,9 @@ func (cfg *apiConfig) middlewareAuth(next http.Handler) http.Handler {
 		}
 
 		subId := token.Claims.(*jwt.RegisteredClaims).Subject
+		issuer := token.Claims.(*jwt.RegisteredClaims).Issuer
 		ctx := context.WithValue(r.Context(), "userId", subId)
+		ctx = context.WithValue(ctx, "issuer", issuer)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
