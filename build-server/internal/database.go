@@ -11,8 +11,9 @@ import (
 )
 
 type DB struct {
-	path string
-	mu   sync.RWMutex
+	path      string
+	mu        sync.RWMutex
+	pathToken string
 }
 
 type Chirp struct {
@@ -43,10 +44,11 @@ func NewDB(path string) (*DB, error) {
 	// We return the path to the database file.
 
 	db := &DB{
-		path: path,
+		path:      path,
+		pathToken: "tokens.json",
 	}
 
-	error := db.ensureDB()
+	error := db.ensureDB(db.path)
 	if error != nil {
 		return nil, error
 
@@ -59,7 +61,7 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	//open file
-	db.ensureDB()
+	db.ensureDB(db.path)
 	databaseContent, err := db.loadDB()
 	if err != nil {
 		return Chirp{}, err
@@ -71,7 +73,7 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 			Id:   1,
 		}
 		databaseContent.Chirps[1] = chrip
-		err := db.writeDB(databaseContent)
+		err := db.writeDB(databaseContent, db.path)
 		if err != nil {
 			return Chirp{}, err
 		}
@@ -88,7 +90,7 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 		Id:   lastId + 1,
 	}
 	databaseContent.Chirps[lastId+1] = chrip
-	err = db.writeDB(databaseContent)
+	err = db.writeDB(databaseContent, db.path)
 	if err != nil {
 		return Chirp{}, err
 
@@ -119,7 +121,7 @@ func (db *DB) loadDB() (DBStructure, error) {
 func (db *DB) loadUsersDB() (UserDB, error) {
 	//open file
 
-	db.ensureDB()
+	db.ensureDB(db.path)
 	data, err := os.ReadFile(db.path)
 
 	if err != nil {
@@ -139,29 +141,30 @@ func (db *DB) loadUsersDB() (UserDB, error) {
 	return databaseContent, nil
 }
 
-func (db *DB) writeDB(data interface{}) error {
+func (db *DB) writeDB(data interface{}, dbFile string) error {
 	//open file
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	newData, _ := json.Marshal(data)
-	err := os.WriteFile(db.path, newData, 0644)
+	err := os.WriteFile(dbFile, newData, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (db *DB) ensureDB() error {
+
+func (db *DB) ensureDB(nameFileDb string) error {
 
 	//open file
-	_, err := os.Stat(db.path)
+	_, err := os.Stat(nameFileDb)
 	if err != nil {
 		if os.IsNotExist(err) {
 			//create file
-			_, err := os.Create(db.path)
+			_, err := os.Create(nameFileDb)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Database created at: %s\n", db.path)
+			fmt.Printf("Database created at: %s\n", nameFileDb)
 
 		}
 
@@ -225,7 +228,7 @@ func (db *DB) CreateUser(email, password string) (User, error) {
 			Password: string(hashedPassword),
 		}
 		userDatabaseContent.Users[1] = user
-		err := db.writeDB(userDatabaseContent)
+		err := db.writeDB(userDatabaseContent, db.path)
 		if err != nil {
 			return User{}, err
 		}
@@ -244,7 +247,7 @@ func (db *DB) CreateUser(email, password string) (User, error) {
 		Password: string(hashedPassword),
 	}
 	userDatabaseContent.Users[lastId+1] = user
-	err = db.writeDB(userDatabaseContent)
+	err = db.writeDB(userDatabaseContent, db.path)
 	if err != nil {
 		return User{}, err
 	}
@@ -339,7 +342,7 @@ func (db *DB) UpdateUser(user User) (User, error) {
 		Password: string(newPassword),
 		Id:       user.Id,
 	}
-	err = db.writeDB(userDatabaseContent)
+	err = db.writeDB(userDatabaseContent, db.path)
 	if err != nil {
 		return User{}, err
 	}
@@ -347,7 +350,7 @@ func (db *DB) UpdateUser(user User) (User, error) {
 }
 
 func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
-	db.ensureDB()
+	db.ensureDB(db.pathToken)
 	//open file
 	allData, error := db.GetAllRevokedTokens()
 	if error != nil {
@@ -359,7 +362,7 @@ func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
 	}
 
 	allData.Tokens[refresh] = int(time.Now().Unix())
-	err := db.writeDB(allData)
+	err := db.writeDB(allData, db.pathToken)
 	if err != nil {
 		return false, err
 	}
@@ -368,7 +371,7 @@ func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
 }
 
 func (db *DB) IsRevokedToken(refresh string) (bool, error) {
-	db.ensureDB()
+	db.ensureDB(db.pathToken)
 	//open file
 	allData, error := db.GetAllRevokedTokens()
 	if error != nil {
@@ -384,7 +387,7 @@ func (db *DB) IsRevokedToken(refresh string) (bool, error) {
 
 func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
 	//open file
-	db.ensureDB()
+	db.ensureDB(db.pathToken)
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	data, err := os.ReadFile(db.path)
