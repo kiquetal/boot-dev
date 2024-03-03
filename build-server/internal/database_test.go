@@ -114,3 +114,15 @@ func TestDB_PutUser(t *testing.T) {
 	fmt.Printf("User: %v\n", user)
 
 }
+
+func TestDB_RevokedToken(t *testing.T) {
+	databaseCon, err := NewDB("revoked.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+	ok, err := databaseCon.SaveRevokedToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+	if err != nil {
+		t.Errorf("Error saving token: %v", err)
+	}
+	fmt.Printf("Token saved: %v\n", ok)
+}

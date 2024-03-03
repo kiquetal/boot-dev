@@ -33,7 +33,7 @@ type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
 }
 
-type RevokedToken struct {
+type RevokedTokenDB struct {
 	Tokens map[string]bool `json:"tokens"`
 }
 
@@ -343,4 +343,65 @@ func (db *DB) UpdateUser(user User) (User, error) {
 		return User{}, err
 	}
 	return user, nil
+}
+
+func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
+	db.mu.Lock()
+	db.ensureDB()
+	defer db.mu.Unlock()
+	//open file
+	allData, error := db.GetAllRevokedTokens()
+	if error != nil {
+		return false, error
+
+	}
+	if len(allData.Tokens) == 0 {
+		allData.Tokens = make(map[string]bool)
+	}
+
+	allData.Tokens[refresh] = true
+	err := db.writeDB(allData)
+	if err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
+func (db *DB) IsRevokedToken(refresh string) (bool, error) {
+	defer db.mu.RUnlock()
+	db.ensureDB()
+	//open file
+	allData, error := db.GetAllRevokedTokens()
+	if error != nil {
+		return false, error
+	}
+	db.mu.RLock()
+	_, ok := allData.Tokens[refresh]
+	if ok {
+		return true, nil
+	}
+	return false, nil
+
+}
+
+func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
+	//open file
+	db.ensureDB()
+
+	data, err := os.ReadFile(db.path)
+	if err != nil {
+		return RevokedTokenDB{}, err
+	}
+	if len(data) == 0 {
+		return RevokedTokenDB{}, nil
+	}
+	var revokedTokens RevokedTokenDB
+	err = json.Unmarshal(data, &revokedTokens)
+	if err != nil {
+		fmt.Printf("Error unmarshalling data: %v", err)
+		return RevokedTokenDB{}, err
+	}
+
+	return revokedTokens, nil
 }
