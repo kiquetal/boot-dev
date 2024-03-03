@@ -487,6 +487,63 @@ func (cfg *apiConfig) middlewareAuth(next http.Handler) http.Handler {
 	})
 }
 
+func (cfg *apiConfig) refreshToken(w http.ResponseWriter, r *http.Request) {
+
+	//check if issuer is chirpy-refresh
+
+	issuer := r.Context().Value("issuer").(string)
+	if issuer != "chirpy-refresh" {
+		respondWithError(w, http.StatusUnauthorized, "Invalid issuer")
+		return
+	}
+	refreshToken := r.Header.Get("Authorization")
+	refreshToken = strings.Replace(refreshToken, "Bearer ", "", 1)
+	bool, err := cfg.DB.IsRevokedToken(refreshToken)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	if bool {
+		respondWithError(w, http.StatusUnauthorized, "Invalid token")
+		return
+	}
+
+	jwt, err := cfg.generateJWT(r.Context().Value("userId").(string), "chirpy-access")
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+
+	}
+
+	respondWithJSON(w, http.StatusOK, struct {
+		Token string `json:"token"`
+	}{
+		Token: jwt,
+	})
+
+}
+
+func (cfg *apiConfig) revokeToken(w http.ResponseWriter, r *http.Request) {
+
+	issuer := r.Context().Value("issuer").(string)
+	if issuer != "chirpy-refresh" {
+		respondWithError(w, http.StatusUnauthorized, "Invalid issuer")
+		return
+	}
+	refreshToken := r.Header.Get("Authorization")
+	refreshToken = strings.Replace(refreshToken, "Bearer ", "", 1)
+	_, err := cfg.DB.SaveRevokedToken(refreshToken)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusOK, struct {
+		Ok bool `json:"ok"`
+	}{
+		Ok: true,
+	})
+
+}
+
 var api = &apiConfig{}
 
 func main() {
@@ -518,6 +575,8 @@ func main() {
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.Post("/users", api.createUser)
 	rapi.With(api.middlewareAuth).Put("/users", api.updateRoute)
+	rapi.With(api.middlewareAuth).Post("/refresh", api.refreshToken)
+	rapi.With(api.middlewareAuth).Post("/revoke", api.revokeToken)
 	rapi.Post("/login", api.login)
 	r.Mount("/api", rapi)
 

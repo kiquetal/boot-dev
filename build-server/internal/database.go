@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"os"
 	"sync"
+	"time"
 )
 
 type DB struct {
@@ -34,7 +35,7 @@ type DBStructure struct {
 }
 
 type RevokedTokenDB struct {
-	Tokens map[string]bool `json:"tokens"`
+	Tokens map[string]int `json:"tokens"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -354,10 +355,10 @@ func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
 
 	}
 	if len(allData.Tokens) == 0 {
-		allData.Tokens = make(map[string]bool)
+		allData.Tokens = make(map[string]int)
 	}
 
-	allData.Tokens[refresh] = true
+	allData.Tokens[refresh] = int(time.Now().Unix())
 	err := db.writeDB(allData)
 	if err != nil {
 		return false, err
@@ -367,14 +368,12 @@ func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
 }
 
 func (db *DB) IsRevokedToken(refresh string) (bool, error) {
-	defer db.mu.RUnlock()
 	db.ensureDB()
 	//open file
 	allData, error := db.GetAllRevokedTokens()
 	if error != nil {
 		return false, error
 	}
-	db.mu.RLock()
 	_, ok := allData.Tokens[refresh]
 	if ok {
 		return true, nil
