@@ -14,13 +14,13 @@ type DB struct {
 	path      string
 	mu        sync.RWMutex
 	pathToken string
+	pathUser  string
 }
 
 type Chirp struct {
-	AuthorId int `json:"author_id"`
-
-	Body string `json:"body"`
-	Id   int    `json:"id"`
+	AuthorId int    `json:"author_id"`
+	Body     string `json:"body"`
+	Id       int    `json:"id"`
 }
 
 type User struct {
@@ -48,6 +48,7 @@ func NewDB(path string) (*DB, error) {
 	db := &DB{
 		path:      path,
 		pathToken: "tokens.json",
+		pathUser:  "users.json",
 	}
 
 	error := db.ensureDB(db.path)
@@ -123,8 +124,8 @@ func (db *DB) loadDB() (DBStructure, error) {
 func (db *DB) loadUsersDB() (UserDB, error) {
 	//open file
 
-	db.ensureDB(db.path)
-	data, err := os.ReadFile(db.path)
+	db.ensureDB(db.pathUser)
+	data, err := os.ReadFile(db.pathUser)
 
 	if err != nil {
 		return UserDB{}, err
@@ -249,7 +250,7 @@ func (db *DB) CreateUser(email, password string) (User, error) {
 			Password: string(hashedPassword),
 		}
 		userDatabaseContent.Users[1] = user
-		err := db.writeDB(userDatabaseContent, db.path)
+		err := db.writeDB(userDatabaseContent, db.pathUser)
 		if err != nil {
 			return User{}, err
 		}
@@ -268,7 +269,7 @@ func (db *DB) CreateUser(email, password string) (User, error) {
 		Password: string(hashedPassword),
 	}
 	userDatabaseContent.Users[lastId+1] = user
-	err = db.writeDB(userDatabaseContent, db.path)
+	err = db.writeDB(userDatabaseContent, db.pathUser)
 	if err != nil {
 		return User{}, err
 	}
@@ -425,4 +426,26 @@ func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
 		return RevokedTokenDB{}, err
 	}
 	return revokedTokens, nil
+}
+
+func (db *DB) DeleteChrip(id int) error {
+	db.mu.Lock()
+	databaseContent, err := db.loadDB()
+	db.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	if len(databaseContent.Chirps) == 0 {
+		return errors.New("chirp not found")
+	}
+	_, ok := databaseContent.Chirps[id]
+	if !ok {
+		return errors.New("chirp not found")
+	}
+	delete(databaseContent.Chirps, id)
+	err = db.writeDB(databaseContent, db.path)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -554,6 +554,46 @@ func (cfg *apiConfig) revokeToken(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (cfg *apiConfig) DeleteChirp(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("Delete chirp: %v\n", r)
+	id := chi.URLParam(r, "id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID")
+		return
+	}
+	userId := r.Context().Value("userId").(string)
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	chirp, err := cfg.DB.GetChirp(idInt)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	fmt.Printf("Chirp: %+v\n", chirp)
+	if chirp.AuthorId != userIdInt {
+		respondWithError(w, http.StatusForbidden, "Invalid user")
+		return
+	}
+
+	fmt.Printf("Id  of the chrip i want to delete", idInt)
+	fmt.Printf("Id of the user", userIdInt)
+	fmt.Printf("Chirp: %+v\n", chirp)
+	err = cfg.DB.DeleteChrip(idInt)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusOK, struct {
+		Ok bool `json:"ok"`
+	}{
+		Ok: true,
+	})
+}
+
 var api = &apiConfig{}
 
 func main() {
@@ -583,6 +623,7 @@ func main() {
 	rapi.With(api.middlewareAuth).Post("/chirps", api.createChirp)
 	rapi.Get("/chirps", api.getAllChirps)
 	rapi.Get("/chirps/{id}", api.getChirpByID)
+	rapi.With(api.middlewareAuth).Delete("/chirps/{id}", api.DeleteChirp)
 	rapi.Post("/users", api.createUser)
 	rapi.With(api.middlewareAuth).Put("/users", api.updateRoute)
 	rapi.With(api.middlewareAuth).Post("/refresh", api.refreshToken)
