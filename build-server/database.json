@@ -1,1 +1,1 @@
-{"users":{"1":{"email":"saul@bettercall.com","id":1,"password":"$2a$10$fPUbRzXXsOZAAgwgVfNNROHgYpLPZ1V0Y8bC6aLTRYG9vbALniGtm"}}}
+{"chirps":{"1":{"author_id":1,"body":"I'm the one who knocks!","id":1},"2":{"author_id":1,"body":"I did it for me. I liked it. I was good at it. And, I was really... I was alive.","id":2}}}

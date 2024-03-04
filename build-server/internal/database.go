@@ -17,6 +17,8 @@ type DB struct {
 }
 
 type Chirp struct {
+	AuthorId int `json:"author_id"`
+
 	Body string `json:"body"`
 	Id   int    `json:"id"`
 }
@@ -56,10 +58,8 @@ func NewDB(path string) (*DB, error) {
 	return db, nil
 }
 
-func (db *DB) CreateChirp(body string) (Chirp, error) {
+func (db *DB) CreateChirp(body string, subId int) (Chirp, error) {
 
-	db.mu.Lock()
-	defer db.mu.Unlock()
 	//open file
 	db.ensureDB(db.path)
 	databaseContent, err := db.loadDB()
@@ -69,8 +69,9 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	if len(databaseContent.Chirps) == 0 {
 		databaseContent.Chirps = make(map[int]Chirp)
 		var chrip = Chirp{
-			Body: body,
-			Id:   1,
+			Body:     body,
+			Id:       1,
+			AuthorId: subId,
 		}
 		databaseContent.Chirps[1] = chrip
 		err := db.writeDB(databaseContent, db.path)
@@ -86,8 +87,9 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 		}
 	}
 	var chrip = Chirp{
-		Body: body,
-		Id:   lastId + 1,
+		Body:     body,
+		Id:       lastId + 1,
+		AuthorId: subId,
 	}
 	databaseContent.Chirps[lastId+1] = chrip
 	err = db.writeDB(databaseContent, db.path)
@@ -206,6 +208,25 @@ func (db *DB) GetChirp(id int) (Chirp, error) {
 		return Chirp{}, errors.New("Chirp not found")
 	}
 	return chirp, nil
+}
+
+func (db *DB) GetChirpsByUserId(userId int) ([]Chirp, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	databaseContent, err := db.loadDB()
+	if err != nil {
+		return nil, err
+	}
+	if len(databaseContent.Chirps) == 0 {
+		return []Chirp{}, nil
+	}
+	var chirps []Chirp
+	for _, chirp := range databaseContent.Chirps {
+		if chirp.AuthorId == userId {
+			chirps = append(chirps, chirp)
+		}
+	}
+	return chirps, nil
 }
 
 func (db *DB) CreateUser(email, password string) (User, error) {

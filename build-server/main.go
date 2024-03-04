@@ -192,17 +192,27 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, errors.New("Invalid request payload").Error())
 		return
 	}
-	chirp, err := cfg.DB.CreateChirp(body)
+	subId := r.Context().Value("userId").(string)
+	intSubID, err := strconv.Atoi(subId)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	fmt.Printf("SubId: %v\n", subId)
+
+	chirp, err := cfg.DB.CreateChirp(body, intSubID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	respondWithJSON(w, http.StatusCreated, struct {
-		Body string `json:"body"`
-		Id   int    `json:"id"`
+		AuthorId int    `json:"author_id"`
+		Body     string `json:"body"`
+		Id       int    `json:"id"`
 	}{
-		Body: chirp.Body,
-		Id:   chirp.Id,
+		Body:     chirp.Body,
+		Id:       chirp.Id,
+		AuthorId: chirp.AuthorId,
 	})
 }
 
@@ -570,7 +580,7 @@ func main() {
 	rapi.Get("/metrics", api.newHandler)
 	rapi.Get("/reset", api.reset)
 	//	rapi.Post("/validate_chirp", api.validateChirp)
-	rapi.Post("/chirps", api.createChirp)
+	rapi.With(api.middlewareAuth).Post("/chirps", api.createChirp)
 	rapi.Get("/chirps", api.getAllChirps)
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.Post("/users", api.createUser)

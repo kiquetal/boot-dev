@@ -25,7 +25,7 @@ func TestDB_CreateChirp(t *testing.T) {
 		t.Errorf("Error creating new database: %v", err)
 	}
 	// create a chrip
-	_, err = databaseCon.CreateChirp("Hello World")
+	_, err = databaseCon.CreateChirp("Hello World", 1)
 	if err != nil {
 		t.Errorf("Error creating new chirp: %v", err)
 	}
@@ -125,4 +125,28 @@ func TestDB_RevokedToken(t *testing.T) {
 		t.Errorf("Error saving token: %v", err)
 	}
 	fmt.Printf("Token saved: %v\n", ok)
+}
+
+func TestDB_CreateChrip(t *testing.T) {
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+	ok, err := databaseCon.CreateChirp("Hello World", 1)
+	if err != nil {
+		t.Errorf("Error creating chirp: %v", err)
+	}
+	fmt.Printf("Chirp created: %v\n", ok)
+}
+
+func TestDB_GetChirps(t *testing.T) {
+	databaseCon, err := NewDB("database.json")
+	if err != nil {
+		t.Errorf("Error creating new database: %v", err)
+	}
+	data, err := databaseCon.GetChirpsByUserId(2)
+	if err != nil {
+		t.Errorf("Error getting chirps: %v", err)
+	}
+	fmt.Printf("Chirps: %+v\n", data)
 }
