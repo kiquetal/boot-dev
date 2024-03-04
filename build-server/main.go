@@ -30,7 +30,7 @@ func addCORSHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func myHandler(w http.ResponseWriter, r *http.Request) {
+func myHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	//write OK
@@ -58,13 +58,16 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 
 }
 
-func (cfg *apiConfig) newHandler(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) newHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits: " + strconv.Itoa(cfg.fileserverHits)))
+	_, err := w.Write([]byte("Hits: " + strconv.Itoa(cfg.fileserverHits)))
+	if err != nil {
+		return
+	}
 }
 
-func (cfg *apiConfig) reset(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) reset(w http.ResponseWriter, _ *http.Request) {
 	cfg.fileserverHits = 0
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -78,7 +81,7 @@ type Data struct {
 	FileserverHits string
 }
 
-func (cfg *apiConfig) templateAdmin(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) templateAdmin(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	// ignore options and is not metric endpoint
@@ -115,13 +118,13 @@ func (cfg *apiConfig) validateChirpFunc(r *http.Request) (bool, string, error) {
 	var body bodyJSON
 	err2 := decoder.Decode(&body)
 	if body.Body == "" {
-		return false, "", fmt.Errorf("Invalid request payload")
+		return false, "", fmt.Errorf("invalid request payload")
 	}
 	if err2 != nil {
-		return false, "", fmt.Errorf("Invalid request payload")
+		return false, "", fmt.Errorf("invalid request payload")
 	}
 	if len(body.Body) > 140 {
-		return false, "", fmt.Errorf("Chirp is too long")
+		return false, "", fmt.Errorf("chirp is too long")
 
 	}
 	alteredBody := processAndReplaceBadWords(body.Body)
@@ -144,9 +147,6 @@ func (cfg *apiConfig) validateChirp(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 
-	type successJSON struct {
-		Valid bool `json:"valid"`
-	}
 	fmt.Printf("Request: %v\n", r)
 	decoder := json.NewDecoder(r.Body)
 	var body bodyJSON
@@ -189,7 +189,7 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 	_, body, err := cfg.validateChirpFunc(r)
 	fmt.Printf("RequestCreateChirps: %v\n", r)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, errors.New("Invalid request payload").Error())
+		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload").Error())
 		return
 	}
 	subId := r.Context().Value("userId").(string)
@@ -227,7 +227,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	}
 }
 
-func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, _ *http.Request) {
 	chirps, err := cfg.DB.GetChirps()
 	//sort by id
 	sort.Slice(chirps, func(i, j int) bool {
@@ -396,7 +396,7 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-	jwt, err := cfg.generateJWT(strconv.Itoa(userLogged.Id), "chirpy-access")
+	jwtToken, err := cfg.generateJWT(strconv.Itoa(userLogged.Id), "chirpy-access")
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -417,14 +417,14 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	}{
 		Email:        userLogged.Email,
 		Id:           userLogged.Id,
-		Token:        jwt,
+		Token:        jwtToken,
 		RefreshToken: refresh,
 	})
 }
 
 func processAndReplaceBadWords(body string) string {
 
-	var badWords = []string{"kerfuffle", "sharbert", "fornax"}
+	var badWords = []string{"kerfuffle", "sharer", "fornax"}
 	var newBody string
 	var containBadWord bool
 
@@ -508,16 +508,16 @@ func (cfg *apiConfig) refreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 	refreshToken := r.Header.Get("Authorization")
 	refreshToken = strings.Replace(refreshToken, "Bearer ", "", 1)
-	bool, err := cfg.DB.IsRevokedToken(refreshToken)
+	isRevoked, err := cfg.DB.IsRevokedToken(refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	if bool {
+	if isRevoked {
 		respondWithError(w, http.StatusUnauthorized, "Invalid token")
 		return
 	}
 
-	jwt, err := cfg.generateJWT(r.Context().Value("userId").(string), "chirpy-access")
+	generateJWT, err := cfg.generateJWT(r.Context().Value("userId").(string), "chirpy-access")
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -527,7 +527,7 @@ func (cfg *apiConfig) refreshToken(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, struct {
 		Token string `json:"token"`
 	}{
-		Token: jwt,
+		Token: generateJWT,
 	})
 
 }
@@ -599,7 +599,10 @@ var api = &apiConfig{}
 func main() {
 
 	db, err := database.NewDB("database.json")
-	godotenv.Load()
+	err = godotenv.Load()
+	if err != nil {
+		return
+	}
 	if err != nil {
 		panic(err)
 	}
