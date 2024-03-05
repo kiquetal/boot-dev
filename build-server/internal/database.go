@@ -24,9 +24,10 @@ type Chirp struct {
 }
 
 type User struct {
-	Email    string `json:"email"`
-	Id       int    `json:"id"`
-	Password string `json:"password"`
+	Email       string `json:"email"`
+	Id          int    `json:"id"`
+	Password    string `json:"password"`
+	IsChirpyRed bool   `json:"is_chirpy_red"`
 }
 
 type UserDB struct {
@@ -59,6 +60,24 @@ func NewDB(path string) (*DB, error) {
 	return db, nil
 }
 
+func (db *DB) CreatePolkaWebhook(subId int) (User, error) {
+
+	//open file
+	userDatabaseContent, err := db.loadUsersDB()
+	if err != nil {
+		return User{}, err
+	}
+	var updateUser User
+	updateUser = userDatabaseContent.Users[subId]
+	updateUser.IsChirpyRed = true
+	userDatabaseContent.Users[subId] = updateUser
+	err = db.writeDB(userDatabaseContent, db.pathUser)
+	if err != nil {
+		return User{}, err
+
+	}
+	return updateUser, nil
+}
 func (db *DB) CreateChirp(body string, subId int) (Chirp, error) {
 
 	//open file

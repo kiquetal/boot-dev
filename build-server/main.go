@@ -26,6 +26,11 @@ func addCORSHeaders(next http.Handler) http.Handler {
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		// Call the next handler
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -44,6 +49,7 @@ type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
 	Secret         string
+	POLKA          string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -53,6 +59,24 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 			cfg.fileserverHits++
 		}
 		fmt.Printf("Fileserver hits: %d\n", cfg.fileserverHits)
+		next.ServeHTTP(w, r)
+	})
+
+}
+func (cfg *apiConfig) middlewareKey(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//check Authorization has ApiKey
+		apiKey := r.Header.Get("Authorization")
+		if apiKey == "" {
+			respondWithError(w, http.StatusUnauthorized, "No token found")
+			return
+		}
+		apiKey = strings.Replace(apiKey, "ApiKey ", "", 1)
+		fmt.Printf("Apikey: %s\n", apiKey)
+		if apiKey != cfg.POLKA {
+			respondWithError(w, http.StatusUnauthorized, "Invalid token")
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 
@@ -283,17 +307,18 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 
 	}
 	respondWithJSON(w, http.StatusCreated, struct {
-		Email string `json:"email"`
-		Id    int    `json:"id"`
+		Email       string `json:"email"`
+		Id          int    `json:"id"`
+		IsChirpyRed bool   `json:"is_chirpy_red"`
 	}{
-		Email: userCreated.Email,
-		Id:    userCreated.Id,
+		Email:       userCreated.Email,
+		Id:          userCreated.Id,
+		IsChirpyRed: userCreated.IsChirpyRed,
 	})
 }
 func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Update route: %v\n", r)
-
 	type userJSON struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -302,6 +327,7 @@ func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 	var userInput userJSON
 	err2 := decoder.Decode(&userInput)
 	if err2 != nil {
+
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -321,7 +347,7 @@ func (cfg *apiConfig) updateRoute(w http.ResponseWriter, r *http.Request) {
 
 	}
 	user, e := cfg.DB.GetUser(id)
-	fmt.Printf("Obtainig user by header id", user)
+	fmt.Printf("Obtainig user by header id %v", user)
 	if e != nil {
 		respondWithError(w, http.StatusInternalServerError, e.Error())
 		return
@@ -414,11 +440,13 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		Id           int    `json:"id"`
 		Token        string `json:"token"`
 		RefreshToken string `json:"refresh_token"`
+		IsChirpyRed  bool   `json:"is_chirpy_red"`
 	}{
 		Email:        userLogged.Email,
 		Id:           userLogged.Id,
 		Token:        jwtToken,
 		RefreshToken: refresh,
+		IsChirpyRed:  userLogged.IsChirpyRed,
 	})
 }
 
@@ -579,8 +607,8 @@ func (cfg *apiConfig) DeleteChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Id  of the chrip i want to delete", idInt)
-	fmt.Printf("Id of the user", userIdInt)
+	fmt.Printf("Id  of the chrip i want to delete, %v", idInt)
+	fmt.Printf("Id of the user %v", userIdInt)
 	fmt.Printf("Chirp: %+v\n", chirp)
 	err = cfg.DB.DeleteChrip(idInt)
 	if err != nil {
@@ -588,6 +616,34 @@ func (cfg *apiConfig) DeleteChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, struct {
+		Ok bool `json:"ok"`
+	}{
+		Ok: true,
+	})
+}
+
+func (cfg *apiConfig) webhookPolka(writer http.ResponseWriter, request *http.Request) {
+
+	type bodyJsonWebhook struct {
+		Data struct {
+			User_id int `json:"user_id"`
+		}
+		Event string `json:"event"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	var body bodyJsonWebhook
+	err2 := decoder.Decode(&body)
+	if err2 != nil {
+		respondWithError(writer, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	_, err := cfg.DB.CreatePolkaWebhook(body.Data.User_id)
+	if err != nil {
+		respondWithError(writer, http.StatusInternalServerError, err.Error())
+		return
+
+	}
+	respondWithJSON(writer, http.StatusOK, struct {
 		Ok bool `json:"ok"`
 	}{
 		Ok: true,
@@ -608,7 +664,7 @@ func main() {
 	}
 	api.DB = db
 	api.Secret = os.Getenv("JWT_SECRET")
-
+	api.POLKA = os.Getenv("POLKA_KEY")
 	r := chi.NewRouter()
 	fsHandler := api.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir("."))))
 
@@ -628,10 +684,12 @@ func main() {
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.With(api.middlewareAuth).Delete("/chirps/{id}", api.DeleteChirp)
 	rapi.Post("/users", api.createUser)
+	rapi.With(api.middlewareKey).Post("/polka/webhooks", api.webhookPolka)
 	rapi.With(api.middlewareAuth).Put("/users", api.updateRoute)
 	rapi.With(api.middlewareAuth).Post("/refresh", api.refreshToken)
 	rapi.With(api.middlewareAuth).Post("/revoke", api.revokeToken)
 	rapi.Post("/login", api.login)
+
 	r.Mount("/api", rapi)
 
 	corsR := addCORSHeaders(r)
