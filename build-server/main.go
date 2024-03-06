@@ -653,11 +653,14 @@ func (cfg *apiConfig) webhookPolka(writer http.ResponseWriter, request *http.Req
 		respondWithError(writer, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	_, err := cfg.DB.CreatePolkaWebhook(body.Data.User_id)
-	if err != nil {
-		respondWithError(writer, http.StatusInternalServerError, err.Error())
-		return
+	if body.Event == "user.upgraded" {
 
+		_, err := cfg.DB.CreatePolkaWebhook(body.Data.User_id)
+		if err != nil {
+			respondWithError(writer, http.StatusInternalServerError, err.Error())
+			return
+
+		}
 	}
 	respondWithJSON(writer, http.StatusOK, struct {
 		Ok bool `json:"ok"`
@@ -700,7 +703,7 @@ func main() {
 	rapi.Get("/chirps/{id}", api.getChirpByID)
 	rapi.With(api.middlewareAuth).Delete("/chirps/{id}", api.DeleteChirp)
 	rapi.Post("/users", api.createUser)
-	rapi.With(api.middlewareKey).Post("/polka/webhooks", api.webhookPolka)
+	rapi.Post("/polka/webhooks", api.webhookPolka)
 	rapi.With(api.middlewareAuth).Put("/users", api.updateRoute)
 	rapi.With(api.middlewareAuth).Post("/refresh", api.refreshToken)
 	rapi.With(api.middlewareAuth).Post("/revoke", api.revokeToken)
