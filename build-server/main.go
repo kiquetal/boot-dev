@@ -251,9 +251,25 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	}
 }
 
-func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, _ *http.Request) {
+func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.DB.GetChirps()
 	//sort by id
+	authorId := r.URL.Query().Get("author_id")
+	if authorId != "" {
+		authorIdInt, err := strconv.Atoi(authorId)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Invalid author ID")
+			return
+		}
+		var chirpsByUser []database.Chirp
+		for _, chirp := range chirps {
+			if chirp.AuthorId == authorIdInt {
+				chirpsByUser = append(chirpsByUser, chirp)
+			}
+		}
+		chirps = chirpsByUser
+
+	}
 	sort.Slice(chirps, func(i, j int) bool {
 		return chirps[i].Id < chirps[j].Id
 
