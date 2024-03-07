@@ -1,0 +1,20 @@
+PUT http://localhost:8080/api/users
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHktcmVmcmVzaCIsInN1YiI6IjEiLCJleHAiOjE3MTQ2MTc3MzYsImlhdCI6MTcwOTQzMzczNn0.EvYP0_Z_Z9w5NCzMC-49Pyd_e35TfM9G75bw7vfAVbo
+
+{
+  "email": "mike@bettercall.com",
+  "password": "654321"
+}
+<> 2024-03-02T234228.401.json
+<> 2024-03-01T212251.401.json
+<> 2024-03-01T212205.200.json
+<> 2024-03-01T211436.200.json
+<> 2024-03-01T211424.401.json
+<> 2024-03-01T211221.500.json
+<> 2024-03-01T211211.500.json
+<> 2024-03-01T211203.500.json
+<> 2024-03-01T211150.200.json
+<> 2024-03-01T211041.400.json
+<> 2024-03-01T211033.400.json
+

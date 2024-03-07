@@ -1,0 +1,6 @@
+DELETE http://localhost:8080/api/chirps/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHktYWNjZXNzIiwic3ViIjoiMSIsImV4cCI6MTcwOTYwMDk2MSwiaWF0IjoxNzA5NTE0NTYxfQ.cs-eMpPhuI1cwiRzt1rHGM0StJ7p15Iuzph96jH8dyw
+
+<> 2024-03-03T221157.403.json
+<> 2024-03-03T221101.403.json
+<> 2024-03-03T221041.404.txt

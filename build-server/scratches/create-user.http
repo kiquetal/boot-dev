@@ -1,0 +1,18 @@
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "email": "skyler@breakingbad.com",
+  "password": "123456"
+}
+
+<> 2024-03-06T080430.201.json
+<> 2024-03-04T223744.201.json
+<> 2024-03-03T222535.201.json
+<> 2024-03-03T222355.201.json
+<> 2024-03-03T133203.201.json
+<> 2024-03-02T234209.201.json
+<> 2024-03-02T233625.201.json
+<> 2024-03-01T213056.201.json
+<> 2024-03-01T212109.201.json
+<> 2024-03-01T211358.201.json

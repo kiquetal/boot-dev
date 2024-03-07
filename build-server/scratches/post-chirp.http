@@ -1,0 +1,18 @@
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHktYWNjZXNzIiwic3ViIjoiMiIsImV4cCI6MTcwOTgwOTQ4MCwiaWF0IjoxNzA5NzIzMDgwfQ.PSw6oE8dDvY_QFFWhcq_gnbx3L10JJCufi7fkakbXhM
+
+{
+  "body": "I'm the one who knocks!"
+}
+
+<> 2024-03-06T080501.201.json
+<> 2024-03-06T080413.201.json
+<> 2024-03-06T080351.401.json
+<> 2024-03-03T222501.201.json
+
+
+
+
+
+

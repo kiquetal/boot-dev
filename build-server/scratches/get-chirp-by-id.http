@@ -1,0 +1,5 @@
+GET http://localhost:8080/api/chirps/2
+
+<> 2024-03-03T213459.200.json
+<> 2024-03-03T213448.200.json
+

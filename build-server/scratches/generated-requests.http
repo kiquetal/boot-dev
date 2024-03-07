@@ -1,0 +1,11 @@
+###
+DELETE http://localhost/api/tv
+
+###
+POST https://dnxdcc3yzg.execute-api.us-east-1.amazonaws.com/tdms-api.tigodevops.com/items
+
+###
+POST https://dnxdcc3yzg.execute-api.us-east-1.amazonaws.com/prod/items
+
+###
+GET http://localhost/carts

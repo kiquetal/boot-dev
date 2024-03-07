@@ -1,0 +1,4 @@
+GET http://localhost:8080/api/chirps?author_id=1
+
+<> 2024-03-06T080552.200.json
+<> 2024-03-06T080548.200.json

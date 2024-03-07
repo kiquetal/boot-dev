@@ -1,0 +1,5 @@
+POST http://localhost:8080/api/revoke
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHktcmVmcmVzaCIsInN1YiI6IjEiLCJleHAiOjE3MTQ2Njc1MzUsImlhdCI6MTcwOTQ4MzUzNX0.KWlHYIX4q3mqPJq8XRtw63trxSfUgqajsWYX1yvpM4o
+
+<> 2024-03-03T133337.200.json
+
