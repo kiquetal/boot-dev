@@ -52,9 +52,9 @@ func NewDB(path string) (*DB, error) {
 		pathUser:  "users.json",
 	}
 
-	error := db.ensureDB(db.path)
-	if error != nil {
-		return nil, error
+	err := db.ensureDB(db.path)
+	if err != nil {
+		return nil, err
 
 	}
 	return db, nil
@@ -81,24 +81,27 @@ func (db *DB) CreatePolkaWebhook(subId int) (User, error) {
 func (db *DB) CreateChirp(body string, subId int) (Chirp, error) {
 
 	//open file
-	db.ensureDB(db.path)
+	err := db.ensureDB(db.path)
+	if err != nil {
+		return Chirp{}, err
+	}
 	databaseContent, err := db.loadDB()
 	if err != nil {
 		return Chirp{}, err
 	}
 	if len(databaseContent.Chirps) == 0 {
 		databaseContent.Chirps = make(map[int]Chirp)
-		var chrip = Chirp{
+		var chirp = Chirp{
 			Body:     body,
 			Id:       1,
 			AuthorId: subId,
 		}
-		databaseContent.Chirps[1] = chrip
+		databaseContent.Chirps[1] = chirp
 		err := db.writeDB(databaseContent, db.path)
 		if err != nil {
 			return Chirp{}, err
 		}
-		return chrip, nil
+		return chirp, nil
 	}
 	var lastId int
 	for k := range databaseContent.Chirps {
@@ -106,18 +109,18 @@ func (db *DB) CreateChirp(body string, subId int) (Chirp, error) {
 			lastId = k
 		}
 	}
-	var chrip = Chirp{
+	var chirp = Chirp{
 		Body:     body,
 		Id:       lastId + 1,
 		AuthorId: subId,
 	}
-	databaseContent.Chirps[lastId+1] = chrip
+	databaseContent.Chirps[lastId+1] = chirp
 	err = db.writeDB(databaseContent, db.path)
 	if err != nil {
 		return Chirp{}, err
 
 	}
-	return chrip, nil
+	return chirp, nil
 
 }
 
@@ -143,7 +146,10 @@ func (db *DB) loadDB() (DBStructure, error) {
 func (db *DB) loadUsersDB() (UserDB, error) {
 	//open file
 
-	db.ensureDB(db.pathUser)
+	err := db.ensureDB(db.pathUser)
+	if err != nil {
+		return UserDB{}, err
+	}
 	data, err := os.ReadFile(db.pathUser)
 
 	if err != nil {
@@ -225,7 +231,7 @@ func (db *DB) GetChirp(id int) (Chirp, error) {
 	}
 	chirp, ok := databaseContent.Chirps[id]
 	if !ok {
-		return Chirp{}, errors.New("Chirp not found")
+		return Chirp{}, errors.New("chirp not found")
 	}
 	return chirp, nil
 }
@@ -313,7 +319,7 @@ func (db *DB) Login(email string, password string) (User, error) {
 		return User{}, err
 	}
 	if len(userDatabaseContent.Users) == 0 {
-		return User{}, errors.New("User not found")
+		return User{}, errors.New("user not found")
 	}
 	var foundUser User
 	for _, user := range userDatabaseContent.Users {
@@ -391,11 +397,14 @@ func (db *DB) UpdateUser(user User) (User, error) {
 }
 
 func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
-	db.ensureDB(db.pathToken)
+	err := db.ensureDB(db.pathToken)
+	if err != nil {
+		return false, err
+	}
 	//open file
-	allData, error := db.GetAllRevokedTokens()
-	if error != nil {
-		return false, error
+	allData, err := db.GetAllRevokedTokens()
+	if err != nil {
+		return false, err
 
 	}
 	if len(allData.Tokens) == 0 {
@@ -403,7 +412,7 @@ func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
 	}
 
 	allData.Tokens[refresh] = int(time.Now().Unix())
-	err := db.writeDB(allData, db.pathToken)
+	err = db.writeDB(allData, db.pathToken)
 	if err != nil {
 		return false, err
 	}
@@ -412,11 +421,14 @@ func (db *DB) SaveRevokedToken(refresh string) (bool, error) {
 }
 
 func (db *DB) IsRevokedToken(refresh string) (bool, error) {
-	db.ensureDB(db.pathToken)
+	err := db.ensureDB(db.pathToken)
+	if err != nil {
+		return false, err
+	}
 	//open file
-	allData, error := db.GetAllRevokedTokens()
-	if error != nil {
-		return false, error
+	allData, err := db.GetAllRevokedTokens()
+	if err != nil {
+		return false, err
 	}
 	_, ok := allData.Tokens[refresh]
 	if ok {
@@ -428,7 +440,10 @@ func (db *DB) IsRevokedToken(refresh string) (bool, error) {
 
 func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
 	//open file
-	db.ensureDB(db.pathToken)
+	err := db.ensureDB(db.pathToken)
+	if err != nil {
+		return RevokedTokenDB{}, err
+	}
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 	data, err := os.ReadFile(db.path)
@@ -447,7 +462,7 @@ func (db *DB) GetAllRevokedTokens() (RevokedTokenDB, error) {
 	return revokedTokens, nil
 }
 
-func (db *DB) DeleteChrip(id int) error {
+func (db *DB) DeleteChirp(id int) error {
 	db.mu.Lock()
 	databaseContent, err := db.loadDB()
 	db.mu.Unlock()

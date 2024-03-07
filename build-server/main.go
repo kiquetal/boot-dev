@@ -626,7 +626,7 @@ func (cfg *apiConfig) DeleteChirp(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Id  of the chrip i want to delete, %v", idInt)
 	fmt.Printf("Id of the user %v", userIdInt)
 	fmt.Printf("Chirp: %+v\n", chirp)
-	err = cfg.DB.DeleteChrip(idInt)
+	err = cfg.DB.DeleteChirp(idInt)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return

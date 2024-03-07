@@ -17,21 +17,6 @@ func TestDB_NewDB(t *testing.T) {
 
 }
 
-func TestDB_CreateChirp(t *testing.T) {
-	// Test the CreateChirp function
-	// Create a new database
-	databaseCon, err := NewDB("test.json")
-	if err != nil {
-		t.Errorf("Error creating new database: %v", err)
-	}
-	// create a chrip
-	_, err = databaseCon.CreateChirp("Hello World", 1)
-	if err != nil {
-		t.Errorf("Error creating new chirp: %v", err)
-	}
-
-}
-
 func TestDB_getAllChirps(t *testing.T) {
 	// Test the getAllChirps function
 	// Create a new database
@@ -59,9 +44,9 @@ func TestDB_GeneratePassword(t *testing.T) {
 		t.Errorf("Error creating new database: %v", err)
 	}
 
-	user, error := databaseCon.CreateUser("kiquetal@gmail.com", "password")
-	if error != nil {
-		t.Errorf("Error creating new user: %v", error)
+	user, err := databaseCon.CreateUser("kiquetal@gmail.com", "password")
+	if err != nil {
+		t.Errorf("Error creating new user: %v", err)
 	}
 	fmt.Printf("User: %v\n", user)
 
@@ -76,9 +61,9 @@ func TestDB_Login(t *testing.T) {
 		t.Errorf("Error creating new database: %v", err)
 	}
 
-	user, error := databaseCon.Login("kiquetal@gmail.com", "password")
-	if error != nil {
-		t.Errorf("Error login for user: %v", error)
+	user, err := databaseCon.Login("kiquetal@gmail.com", "password")
+	if err != nil {
+		t.Errorf("Error login for user: %v", err)
 		return
 	}
 	fmt.Printf("User: %v\n", user)
@@ -127,7 +112,7 @@ func TestDB_RevokedToken(t *testing.T) {
 	fmt.Printf("Token saved: %v\n", ok)
 }
 
-func TestDB_CreateChrip(t *testing.T) {
+func TestDB_CreateChirp(t *testing.T) {
 	databaseCon, err := NewDB("database.json")
 	if err != nil {
 		t.Errorf("Error creating new database: %v", err)
