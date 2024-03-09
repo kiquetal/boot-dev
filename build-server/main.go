@@ -270,10 +270,20 @@ func (cfg *apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
 		chirps = chirpsByUser
 
 	}
-	sort.Slice(chirps, func(i, j int) bool {
-		return chirps[i].Id < chirps[j].Id
+	sortParam := r.URL.Query().Get("sort")
+	if sortParam == "asc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].Id < chirps[j].Id
+		})
+	} else if sortParam == "desc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].Id > chirps[j].Id
+		})
+	}
+	//	sort.Slice(chirps, func(i, j int) bool {
+	//		return chirps[i].Id < chirps[j].Id
 
-	})
+	//	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
