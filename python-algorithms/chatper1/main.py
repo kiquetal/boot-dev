@@ -17,3 +17,14 @@ class Graph:
         else:
             if u is not None:
                 self.graph[v] = {u}
+
+
+def get_min_dist_node(distances, unvisited):
+    min_dist = 0
+    min_node = None
+    for n in distances.keys():
+        if n in unvisited:
+            if min_dist == 0 or distances[n] < min_dist:
+                min_dist = distances[n]
+                min_node = n
+    return min_node
