@@ -38,3 +38,28 @@ def get_min_dist_node(distances, unvisited):
                 min_dist = distances[n]
                 min_node = n
     return min_node
+
+def dijstra(graph, src, dest):
+    unvisited = set(graph.keys())
+    predecessors = {}
+    distance = {}
+    for n in graph.keys():
+        distance[n] = float("inf")
+    distance[src] = 0
+    while unvisited:
+        print(f"Unvisited: {unvisited}")
+        current_node = get_min_dist_node(distance, unvisited)
+        unvisited.remove(current_node)
+
+        if current_node == dest:
+            print(f"Found destination {dest}")
+            return get_path(dest, predecessors)
+        else:
+            print(f"graph for {current_node}: {graph[current_node]}")
+            for neighbor, weight in graph[current_node].items():
+                print(f"Neighbor: {neighbor}, Weight: {weight}")
+                if neighbor in unvisited:
+                    new_distance = distance[current_node] + weight
+                    if new_distance < distance[neighbor]:
+                        distance[neighbor] = new_distance
+                        predecessors[neighbor] = current_node
