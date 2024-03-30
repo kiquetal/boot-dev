@@ -13,10 +13,20 @@ class Graph:
             if v is not None:
                 self.graph[u] = {v}
         if v in self.graph.keys():
-                self.graph[v].add(u)
+            self.graph[v].add(u)
         else:
             if u is not None:
                 self.graph[v] = {u}
+
+
+def get_path(dest, predecessors):
+    path = []
+    node = dest
+    path.insert(0, node)
+    while node in predecessors.keys():
+        node = predecessors[node]
+        path.insert(0, node)
+    return path
 
 
 def get_min_dist_node(distances, unvisited):
