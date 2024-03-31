@@ -20,6 +20,7 @@ class Graph:
 
 
 def get_path(dest, predecessors):
+    print(f"Predecessors: {predecessors}")
     path = []
     node = dest
     path.insert(0, node)
@@ -63,3 +64,22 @@ def dijstra(graph, src, dest):
                     if new_distance < distance[neighbor]:
                         distance[neighbor] = new_distance
                         predecessors[neighbor] = current_node
+
+def bellman_ford(graph, src, dest):
+    distances = {}
+    for n in graph.keys():
+        distances[n] = float("inf")
+    distances[src] = 0
+
+    for x in range(len(graph.keys())):
+        for u in graph.keys():
+            for v, weight in graph[u].items():
+                if distances[u] + weight < distances[v]:
+                    distances[v] = distances[u] + weight
+
+    for u in graph.keys():
+        for v, weight in graph[u].items():
+            if distances[u] + weight < distances[v]:
+                raise Exception("Negative cycle detected!")
+
+    return distances[dest]
