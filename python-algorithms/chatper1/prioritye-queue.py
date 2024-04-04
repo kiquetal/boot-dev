@@ -48,6 +48,18 @@ class MinHeap:
             self.elements[parent_index] = self.elements[index]
             self.bubble_up(parent_index)
 
+    def pop(self):
+        if len(self.elements) == 0:
+            return None
+        min_element = self.elements[0]
+        if len(self.elements) == 1:
+            self.elements = []
+            return min_element[1]
+        last = self.elements[-1]
+        self.elements = self.elements[:-1]
+        self.elements[0] = last
+        self.bubble_down(0)
+        return min_element[1]
 
     # don't touch below this line
 
