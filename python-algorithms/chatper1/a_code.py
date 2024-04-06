@@ -2,7 +2,7 @@ import random
 
 
 def heuristic(next, dest):
-    return abs(next.x - dest) + abs(next.y - dest.y)
+    return abs(next.x - dest.x) + abs(next.y - dest.y)
 
 
 def a_star_search(traffic_grid, src, dest):
@@ -13,8 +13,34 @@ def a_star_search(traffic_grid, src, dest):
     d[src] = None
     costs = {}
     costs[src] = 0
+    visited = set()
+
+    while not p.empty():
+        current = p.pop()
+        if current == dest:
+            break
+        if dest in visited:
+            continue
+        visited.add(current)
+        for neighbor in traffic_grid.neighbors(current):
+            new_cost = costs[current] + neighbor.cost()
+            if neighbor not in costs or new_cost < costs[neighbor]:
+                costs[neighbor] = new_cost
+                priority = new_cost + heuristic(neighbor, dest)
+                p.push(priority, neighbor)
+                d[neighbor] = current
 
 
+    pathToPrint = []
+    pred = dest
+    pathToPrint.append(dest)
+    while pred is not None:
+        if d.get(pred) is not None:
+            pathToPrint.append(d[pred])
+        pred = d[pred]
+
+    pathToPrint.reverse()
+    return pathToPrint
 
     # don't touch below this line
 
@@ -95,3 +121,4 @@ class TrafficGrid:
                 s += f"[{t.cost():02d}]"
             s += "\n"
         return s
+
