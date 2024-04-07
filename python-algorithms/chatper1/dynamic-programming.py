@@ -22,3 +22,26 @@ def edit_distance(str1, str2):
     substitute = edit_distance(str1[:-1],str2[:-1])
     d=min([insert,remove,substitute])
     return 1+d
+
+def edit_distance_2(str1,str2):
+    col = len(str2) + 1
+    print(str1,col)
+    rows = len(str1) + 1
+    print(str2,rows)
+    m = [ [ 0 for _ in range(col)] for _ in range(rows)  ]
+    for i in range(rows):
+        for j in range(col):
+            if i == 0:
+                m[i][j]= j
+            else:
+                if j==0:
+                    m[i][j]=i
+                else:
+                    if str1[i-1]==str2[j-1]:
+                        m[i][j]=m[i-1][j-1]
+                    else:
+                        val=[m[i][j-1],m[i-1][j],m[i-1][j-1]]
+                        minV = min(val)
+                        m[i][j]=1+ minV
+
+    return m[rows-1][col-1]
