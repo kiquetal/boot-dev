@@ -76,5 +76,7 @@ Create a scalar variable that's equal to the value in this row at the pivot colu
 For each value in this row:
 Set the value in this row to its previous value minus the corresponding value in the pivot row multiplied by the scalar. e.g. self.rows[i][j] = self.rows[i][j] - scalar * self.rows[pivot_row_idx][j]
 Create a new scalar equal to the value in the last row, (self.objective), at the index of the pivot column.
-For each value in self.objective:
+For each value in self.objective:Q
 Set the value in self.objective to its previous value minus the corresponding value in the pivot row multiplied by the scalar. e.g. self.objective[i] = self.objective[i] - scalar * self.rows[pivot_row_idx][i]
+
+Testing the git integration
