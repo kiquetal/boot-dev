@@ -60,3 +60,21 @@ Use those 2 values to calculate the total distance from the src to the neighbor
 If the total distance to the neighbor is less than the distance we previously had stored for the neighbor in the distances dictionary:
 Update the distance we have stored for the neighbor
 Update the predecessor of the neighbor to be the min_dist_node
+
+
+### Pivot Operation
+
+ASSIGNMENT
+Complete the pivot method. It takes the pivot row and col indexes as inputs, mutates the internal tableau and returns nothing.
+
+STEPS
+Create a variable pivot_val that contains the value in self.rows at the location of the pivot row and pivot column.
+Divide every value in the pivot row by the pivot_val. This an acceptable operation mathematically, we're diving both sides of the equation by the same number. the purpose is to make the pivot_val = 1 by dividing it by itself.
+For each row in self.rows:
+If the row is the pivot row, skip it and go to the next iteration
+Create a scalar variable that's equal to the value in this row at the pivot column
+For each value in this row:
+Set the value in this row to its previous value minus the corresponding value in the pivot row multiplied by the scalar. e.g. self.rows[i][j] = self.rows[i][j] - scalar * self.rows[pivot_row_idx][j]
+Create a new scalar equal to the value in the last row, (self.objective), at the index of the pivot column.
+For each value in self.objective:
+Set the value in self.objective to its previous value minus the corresponding value in the pivot row multiplied by the scalar. e.g. self.objective[i] = self.objective[i] - scalar * self.rows[pivot_row_idx][i]
