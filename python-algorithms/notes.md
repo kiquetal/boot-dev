@@ -80,4 +80,4 @@ For each value in self.objective:Q
 Set the value in self.objective to its previous value minus the corresponding value in the pivot row multiplied by the scalar. e.g. self.objective[i] = self.objective[i] - scalar * self.rows[pivot_row_idx][i]
 
 Testing the git integration
-Restar the ide
+Restart the ide
