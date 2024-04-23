@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ede68da2-bdf1-4707-98c4-5fe95f60ac3b" name="Changes" comment="Adding lp">
-      <change afterPath="$PROJECT_DIR$/chatper1/tableu.py" afterDir="false" />
+    <list default="true" id="ede68da2-bdf1-4707-98c4-5fe95f60ac3b" name="Changes" comment="Adding tableu solution">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -24,12 +23,6 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="KubernetesApiProvider">{
-  &quot;contexts&quot;: [
-    {
-      &quot;name&quot;: &quot;phoenix&quot;,
-      &quot;originalNamespace&quot;: &quot;default&quot;
-    }
-  ],
   &quot;isMigrated&quot;: true
 }</component>
   <component name="KubernetesSettings">
@@ -49,34 +42,34 @@
     <option name="showLibraryContents" value="true" />
     <option name="showVisibilityIcons" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.boot-dev-playground.executor": "Run",
-    "Python.dynamic-programming.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.main_test.executor": "Run",
-    "Python.scratches-heaps.executor": "Run",
-    "Python.simplex.executor": "Run",
-    "Python.tile.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "go.import.settings.migrated": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/mydata/codes/2024/tokenier-api",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.boot-dev-playground.executor&quot;: &quot;Run&quot;,
+    &quot;Python.dynamic-programming.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main_test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scratches-heaps.executor&quot;: &quot;Run&quot;,
+    &quot;Python.simplex.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tile.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/mydata/codes/2024/opentelemetry-quickstart&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration default="true" type="AZURE_FUNCTION_SUPPORT" factoryName="Run Functions">
       <option name="appName" />
@@ -137,6 +130,14 @@
       </list>
     </recent_temporary>
   </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9f38398b9061-18abd8497189-intellij.indexing.shared.core-IU-241.14494.240" />
+        <option value="bundled-js-predefined-1d06a55b98c1-74d2a5396914-JavaScript-IU-241.14494.240" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -149,7 +150,11 @@
       <workItem from="1712199426191" duration="1767000" />
       <workItem from="1712334698318" duration="11106000" />
       <workItem from="1712844252830" duration="61000" />
-      <workItem from="1712974131593" duration="1053000" />
+      <workItem from="1712974131593" duration="3492000" />
+      <workItem from="1713238694865" duration="55000" />
+      <workItem from="1713274723300" duration="210000" />
+      <workItem from="1713276058619" duration="780000" />
+      <workItem from="1713278202803" duration="2711000" />
     </task>
     <task id="LOCAL-00001" summary="Adding the main and the test">
       <option name="closed" value="true" />
@@ -279,7 +284,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712536611562</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Adding tableu solution">
+      <option name="closed" value="true" />
+      <created>1713063546161</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1713063546161</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -313,7 +326,8 @@
     <MESSAGE value="adding edit distance" />
     <MESSAGE value="adding edit_distance" />
     <MESSAGE value="Adding lp" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding lp" />
+    <MESSAGE value="Adding tableu solution" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adding tableu solution" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
