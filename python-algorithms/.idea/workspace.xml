@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ede68da2-bdf1-4707-98c4-5fe95f60ac3b" name="Changes" comment="Adding tableu solution">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="ede68da2-bdf1-4707-98c4-5fe95f60ac3b" name="Changes" comment="Adding the final solution of the course" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -155,6 +153,7 @@
       <workItem from="1713274723300" duration="210000" />
       <workItem from="1713276058619" duration="780000" />
       <workItem from="1713278202803" duration="2711000" />
+      <workItem from="1713839232031" duration="874000" />
     </task>
     <task id="LOCAL-00001" summary="Adding the main and the test">
       <option name="closed" value="true" />
@@ -292,7 +291,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713063546161</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Adding the final solution of the course">
+      <option name="closed" value="true" />
+      <created>1713839269329</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1713839269329</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -327,7 +334,8 @@
     <MESSAGE value="adding edit_distance" />
     <MESSAGE value="Adding lp" />
     <MESSAGE value="Adding tableu solution" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding tableu solution" />
+    <MESSAGE value="Adding the final solution of the course" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adding the final solution of the course" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
