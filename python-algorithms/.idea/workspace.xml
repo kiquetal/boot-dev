@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ede68da2-bdf1-4707-98c4-5fe95f60ac3b" name="Changes" comment="Adding the final solution of the course" />
+    <list default="true" id="ede68da2-bdf1-4707-98c4-5fe95f60ac3b" name="Changes" comment="Add all files" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -15,6 +15,16 @@
       <list>
         <option value="Python Script" />
       </list>
+    </option>
+  </component>
+  <component name="Git.Merge.Settings">
+    <option name="BRANCH" value="origin/master" />
+  </component>
+  <component name="Git.Pull.Settings">
+    <option name="OPTIONS">
+      <set>
+        <option value="REBASE" />
+      </set>
     </option>
   </component>
   <component name="Git.Settings">
@@ -153,7 +163,7 @@
       <workItem from="1713274723300" duration="210000" />
       <workItem from="1713276058619" duration="780000" />
       <workItem from="1713278202803" duration="2711000" />
-      <workItem from="1713839232031" duration="874000" />
+      <workItem from="1713839232031" duration="1856000" />
     </task>
     <task id="LOCAL-00001" summary="Adding the main and the test">
       <option name="closed" value="true" />
@@ -299,7 +309,15 @@
       <option name="project" value="LOCAL" />
       <updated>1713839269329</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Add all files">
+      <option name="closed" value="true" />
+      <created>1713840245629</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1713840245629</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -335,7 +353,8 @@
     <MESSAGE value="Adding lp" />
     <MESSAGE value="Adding tableu solution" />
     <MESSAGE value="Adding the final solution of the course" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding the final solution of the course" />
+    <MESSAGE value="Add all files" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add all files" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
