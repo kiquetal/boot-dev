@@ -23,6 +23,8 @@ spec:
           volumeMounts:
             - name: cache-volume
               mountPath: /cache
+            - name: synergychat-api-volume
+              mountPath: /persist
         - name: synergychat-crawler-2
           image: bootdotdev/synergychat-crawler:latest
           env:
@@ -36,6 +38,8 @@ spec:
           volumeMounts:
             - name: cache-volume
               mountPath: /cache
+            - name: synergychat-api-volume
+              mountPath: /persist
         - name: synergychat-crawler-3
           image: bootdotdev/synergychat-crawler:latest
           env:
@@ -49,6 +53,12 @@ spec:
           volumeMounts:
             - name: cache-volume
               mountPath: /cache
+            - name: synergychat-api-volume
+              mountPath: /persist
+
       volumes:
         - name: cache-volume
           emptyDir: {}
+        - name: synergychat-api-volume
+          persistentVolumeClaim:
+            claimName: synergychat-api-pvc
