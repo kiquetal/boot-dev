@@ -26,4 +26,6 @@ minikube dashboard
 
 minikube proxy
 
+### Enable addons
 
+minikube addons enable metrics-server
