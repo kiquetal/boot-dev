@@ -17,3 +17,7 @@ spec:
       containers:
         - image: bootdotdev/synergychat-testcpu:latest
           name: synergychat-testcpu
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 50m
