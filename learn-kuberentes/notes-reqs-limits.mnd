@@ -1,0 +1,24 @@
+REQUESTS
+One of the most important things to get right when working with pod autoscalers in Kubernetes are the resource requests and limits. If you don't set them correctly, you can end up with a situation where your pods are crashing, or your autoscaler is scaling up too many pods.
+
+Generally speaking, my rule of thumb is:
+
+Set memory requests ~10% higher than the average memory usage of your pods
+Set CPU requests to 50% of the average CPU usage of your pods
+Set memory limits ~100% higher than the average memory usage of your pods
+Set CPU limits ~100% higher than the average CPU usage of your pods
+Why these numbers? Consider several points:
+
+MEMORY IS SCARIER
+Memory is the scariest resource to run out of. If you run out of CPU, your pods will just slow down. If you run out of memory, your pods will crash. For that reason, it's more important to add a buffer to your memory requests than your CPU requests.
+
+LIMITS ARE FOR PROTECTION
+Limits should only take effect when a pod is using more resources than it should. Limits are like a safety net. If your limits are constantly being hit, you should either increase them or fix your application code so that it uses fewer resources.
+
+As such, limits should generally be set higher than requests.
+
+REQUESTS ARE FOR SCHEDULING
+Because requests are used to schedule pods, you want to make sure that your requests are high enough that once scheduled, your pods will have the resources, but not so high that you're wasting resources. If you set your requests too high, you'll end up with a situation where you can't schedule pods because k8s thinks it doesn't have enough resources, even though it does.
+
+IT ALL DEPENDS!
+These are just rules of thumb! At the end of the day, you always need to understand how your applications work, and what resources they need. The right numbers for your applications might be drastically different than the numbers I've suggested here.
