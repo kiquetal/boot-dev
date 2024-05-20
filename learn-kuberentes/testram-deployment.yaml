@@ -26,8 +26,3 @@ spec:
                 configMapKeyRef:
                   name: testram-configmap
                   key: MEGABYTES
-          resources:
-            limits:
-              memory: 400000Mi
-            requests:
-              memory: 400000Mi
